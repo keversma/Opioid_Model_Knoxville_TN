@@ -1,0 +1,30 @@
+
+'''
+Calls on sobol_sensitivity_analysis_log_scale.py to plot the 
+    results of the sobol analysis from a stored file. 
+'''
+
+import numpy as np
+import pandas as pd
+from matplotlib import gridspec
+import matplotlib.pyplot as plt
+import opioid_model_ODE_solver_log_scale_alphaC as ode_model
+import sobol_sensitivity_analysis_log_scale as SA
+from collections import OrderedDict
+
+# to run from stored data:
+store = SA.load_data('raw_output/sobol_2_15.h5')
+
+# plot the total order ('ST') or the first order ('S1')
+order = 'ST'
+
+# SA.param_ranges_to_latex('raw_output/least_squares_sol_AC2016_False_x0_1000_assumemuAmuF_False')
+# SA.plot_S1_ST_from_store(store)
+SA.plot_S1_or_ST_from_store(store, order, for_manuscript=True, show=True, show_title=False)
+# SA.print_max_conf(store)
+
+# pop_class = 'AC'
+# SA.sen_index_table_to_latex(store, pop_class)
+
+# SA.print_three_most_sens(store, pop_class,'S1')
+# SA.print_three_most_sens(store, pop_class,'ST')
