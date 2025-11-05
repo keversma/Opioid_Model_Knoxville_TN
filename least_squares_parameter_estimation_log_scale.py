@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 from multiprocessing import Pool
 import pickle
-import time
 
 import opioid_model_ODE_solver_log_scale_alphaC as ODE
 
@@ -42,15 +41,15 @@ assumed_params['KG_0'] = 0.0
 param_ranges = OrderedDict()
 param_ranges['tilde_m']        = (-0.1, -0.001) 
 param_ranges['tilde_b']        = (0.1, 0.5)
-param_ranges['log_beta_GA']    = (math.log10(1.0e-3), math.log10(0.1)) #(math.log10(1.0e-3), math.log10(0.1)) #(math.log10(1.0e-8), math.log10(0.1))
-param_ranges['log_beta_GP']    = (math.log10(1.0e-4), math.log10(0.01))#(math.log10(1.0e-4), math.log10(0.01)) #(math.log10(1.0e-5), math.log10(0.01))
-param_ranges['log_theta_SG']   = (math.log10(1.0e-3), math.log10(0.5)) #(math.log10(1.0e-3), math.log10(0.5)) #(math.log10(1.0e-8), math.log10(0.5))  
-param_ranges['log_theta_P']    = (math.log10(1.0e-3), math.log10(1.0)) #(math.log10(1.0e-3), math.log10(1)) #(math.log10(1.0e-5), math.log10(1)) 
+param_ranges['log_beta_GA']    = (math.log10(1.0e-3), math.log10(0.1)) 
+param_ranges['log_beta_GP']    = (math.log10(1.0e-4), math.log10(0.01))
+param_ranges['log_theta_SG']   = (math.log10(1.0e-3), math.log10(0.5))  
+param_ranges['log_theta_P']    = (math.log10(1.0e-3), math.log10(1.0)) 
 param_ranges['theta_A']        = (30, 50.0)     
 param_ranges['epsilon_G']      = (0.333, 52.0)
-param_ranges['log_gamma']      = (math.log10(1.0e-5), math.log10(0.1)) #(math.log10(1.0e-5), math.log10(0.1)) #(math.log10(1.0e-10), math.log10(0.1)) 
+param_ranges['log_gamma']      = (math.log10(1.0e-5), math.log10(0.1)) 
 param_ranges['zeta']           = (0.0001, 0.9)
-param_ranges['log_nu']         = (math.log10(1.0e-3), math.log10(0.9)) #(math.log10(1.0e-3), math.log10(0.9)) #(math.log10(1.0e-8), math.log10(0.9))
+param_ranges['log_nu']         = (math.log10(1.0e-3), math.log10(0.9)) 
 param_ranges['sigma']          = (0.1, 2.0) 
 param_ranges['lambda_A']       = (1.0e-10, 1.0) # have to use 1.0e-10 instead of 0
 param_ranges['lambda_F']       = (1.0e-10, 1.0) # have to use 1.0e-10 instead of 0
@@ -80,11 +79,11 @@ def get_Data_vectors(include_AG2016):
             don't include it in calculations
     '''
     # Read in the data 
-    pop_est_df  = pd.read_csv('cleaned_community_data/population_estimates.csv', 
+    pop_est_df  = pd.read_csv('cleaned_gen_pop_data/population_estimates.csv', 
                             index_col=0)
-    overdose_df = pd.read_csv('cleaned_community_data/overdose_estimates.csv', 
+    overdose_df = pd.read_csv('cleaned_gen_pop_data/overdose_estimates.csv', 
                             index_col=0)
-    quart_pres_df = pd.read_csv('cleaned_community_data/quarterly_prescription_estimates.csv', 
+    quart_pres_df = pd.read_csv('cleaned_gen_pop_data/quarterly_prescription_estimates.csv', 
                             index_col=0)
 
     # convert the columns to ints 
@@ -546,7 +545,7 @@ def plot_solutions(final_params):
 
     sol = ODE.solve_odes(initial_vals=init_vals, params=all_params)
 
-    ODE.plot_comm_or_subcomm(sol, plot_comm=True)
+    ODE.plot_genpop_or_comm(sol, plot_genpop=True)
 
 
 def plot_data_with_results(min_result, include_AG2016, assume_muA_muF, show=True):
@@ -767,7 +766,7 @@ def load_results(file_name):
 
 if __name__ == "__main__":
     RUNPARALLEL = True # whether or not to run in parallel
-    numb_x0 = 1000 # number of initial guesses
+    numb_x0 = 1 # number of initial guesses
     include_AG2016 = False # whether or not to include the AG 2016 data point
     assume_muA_muF = True # whether of not to assume the values of mu_A and mu_F or estimate them
     if RUNPARALLEL:

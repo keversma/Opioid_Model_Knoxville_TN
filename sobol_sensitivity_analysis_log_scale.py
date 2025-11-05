@@ -11,12 +11,11 @@ from SALib.sample import saltelli
 from SALib.analyze import sobol
 import numpy as np
 import pandas as pd
-from matplotlib import gridspec
 import matplotlib.pyplot as plt
+from collections import OrderedDict
+
 import opioid_model_ODE_solver_log_scale_alphaC as ode_model
 import least_squares_parameter_estimation_log_scale as ls
-from collections import OrderedDict
-import math
 
 # determine the number of CPUs in the system
 default_n = os.cpu_count()
@@ -451,7 +450,7 @@ def plot_S1_ST_from_store(store, show=True):
                store['S_H_sens'], store['P_C_sens'], store['A_C_sens'], 
                store['F_C_sens'], store['R_C_sens'], show)
 
-def plot_S1_or_ST_from_store(store, S_string, for_manuscript=False, show=True, show_title=True):
+def plot_S1_or_ST_from_store(store, S_string, show=True, show_title=True):
     '''
     Extract and plot S1 and ST sensitivity data directly from a store object
     '''
@@ -464,7 +463,7 @@ def plot_S1_or_ST_from_store(store, S_string, for_manuscript=False, show=True, s
                store['F_G_sens'], store['R_G_sens'], store['S_C_sens'], 
                store['S_H_sens'], store['P_C_sens'], store['A_C_sens'], 
                store['F_C_sens'], store['R_C_sens'], 
-               S_string, for_manuscript, show, show_title)
+               S_string, show, show_title)
 
 def print_max_conf(store):
     '''
@@ -563,7 +562,7 @@ def plot_S1_ST(S_G_sens, P_G_sens, A_G_sens, F_G_sens, R_G_sens, S_C_sens,
 
 def plot_S1_or_ST(S_G_sens, P_G_sens, A_G_sens, F_G_sens, R_G_sens, S_C_sens, 
                S_H_sens, P_C_sens, A_C_sens, F_C_sens, R_C_sens, S_string, 
-               for_manuscript=False, show=True, show_title=True):
+               show=True, show_title=True):
     '''Plot S1 or ST given by argument S which is a string'''
 
     # make sure S_string is 'S1' or 'ST'
@@ -573,82 +572,51 @@ def plot_S1_or_ST(S_G_sens, P_G_sens, A_G_sens, F_G_sens, R_G_sens, S_C_sens,
         e.args += ('S_string = {}'.format(S_string),)
         raise
 
-    if not for_manuscript:
-        # Gather the S1 or ST results
-        S = pd.concat([S_G_sens[S_string], P_G_sens[S_string], A_G_sens[S_string], 
-                        F_G_sens[S_string], R_G_sens[S_string], S_C_sens[S_string], 
-                        S_H_sens[S_string], P_C_sens[S_string], A_C_sens[S_string], 
-                        F_C_sens[S_string], R_C_sens[S_string]], 
-                        keys=['$S_G$','$P_G$','$A_G$','$F_G$','$R_G$','$S_C$',
-                            '$S_H$','$P_C$','$A_C$','$F_C$','$R_C$'], axis=1) #produces copy
-        
-        # Change to greek
-        for id in S.index:
-            if id in ['PG0', 'AG0', 'FG0', 'RG0', 'SH0', 'PC0', 'AC0', 
-                    'FC0', 'RC0']:
-                S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],id[1])}, inplace=True)
-            elif id in ['tilde_m','tilde_b','tilde_c','tilde_d','tilde_e']:
-                S.rename(index={id: r'$\~{}$'.format(id[-1])}, inplace=True)
-            elif id in ['log_theta_SG', 'log_theta_SH', 'log_theta_SC']:
-                S.rename(index={id: r'$\log(\theta_{{ {} }})$'.format(id[-2:])}, inplace=True)
-            elif id in ['log_beta_GA','log_beta_GP','log_beta_CA','log_beta_HA','log_beta_CP','log_beta_HP']:
-                S.rename(index={id: r'$\log(\beta_{{ {} }})$'.format(id[-2:])}, inplace=True)
-            elif id in ['tilde_m_H', 'tilde_b_H','tilde_m_C', 'tilde_b_C']:
-                S.rename(index={id: r'$\~{}_{}$'.format(id[-3],id[-1])}, inplace=True)
-            elif id[:3] == 'log':
-                S.rename(index={id: r'$\log(\{})$'.format(id[4:])}, inplace=True)
-            elif id == 'k':
-                S.rename(index={id: r'${}$'.format(id)}, inplace=True)
+    # Gather the S1 or ST results
+    S = pd.concat([S_G_sens[S_string], P_G_sens[S_string], A_G_sens[S_string], 
+                    F_G_sens[S_string], R_G_sens[S_string], S_C_sens[S_string], 
+                    S_H_sens[S_string], P_C_sens[S_string], A_C_sens[S_string], 
+                    F_C_sens[S_string], R_C_sens[S_string]], 
+                    keys=['$S_G$','$P_G$','$A_G$','$F_G$','$R_G$','$S_G$',
+                        '$S_H$','$P_G$','$A_G$','$F_G$','$R_G$'], axis=1) #produces copy
+    
+    # Change to greek
+    for id in S.index:
+        if id in ['PG0', 'AG0', 'FG0', 'RG0']:
+            S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],'G')}, inplace=True)
+        elif id in ['PC0', 'AC0', 'FC0', 'RC0']:
+            S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],'G')}, inplace=True)
+        elif id in ['SH0']:
+            S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],id[1])}, inplace=True)
+        elif id in ['tilde_m','tilde_b','tilde_c','tilde_d','tilde_e']:
+            S.rename(index={id: r'$\~{}_{}$'.format(id[-1],'G')}, inplace=True)
+        elif id in ['log_theta_SG']:
+            S.rename(index={id: r'$\log(\theta_{{ S{} }})$'.format('G')}, inplace=True)
+        elif id in ['log_theta_SH']:
+            S.rename(index={id: r'$\log(\theta_{{ S{} }})$'.format('H')}, inplace=True)
+        elif id in ['log_theta_SC']:
+            S.rename(index={id: r'$\log(\theta_{{ S{} }})$'.format('G')}, inplace=True)
+        elif id in ['log_beta_GA','log_beta_GP']:
+            S.rename(index={id: r'$\log(\beta_{{ G{} }})$'.format(id[-1])}, inplace=True)
+        elif id in ['log_beta_CA','log_beta_CP']:
+            S.rename(index={id: r'$\log(\beta_{{ G{} }})$'.format(id[-1])}, inplace=True)
+        elif id in ['log_beta_HA','log_beta_HP']:
+            S.rename(index={id: r'$\log(\beta_{{ H{} }})$'.format(id[-1])}, inplace=True)
+        elif id in ['tilde_m_H', 'tilde_b_H']:
+            S.rename(index={id: r'$\~{}_{}$'.format(id[-3],id[-1])}, inplace=True)
+        elif id in ['tilde_m_C', 'tilde_b_C']:
+            S.rename(index={id: r'$\~{}_G$'.format(id[-3])}, inplace=True)
+        elif id[:3] == 'log':
+            S.rename(index={id: r'$\log(\{})$'.format(id[4:])}, inplace=True)
+        elif id == 'k':
+            S.rename(index={id: r'${}$'.format(id)}, inplace=True)
+        else:
+            if id[-1] == 'G':
+                S.rename(index={id: r'$\{}G$'.format(id[:-1])}, inplace=True)
+            elif id[-1] == 'C':
+                S.rename(index={id: r'$\{}G$'.format(id[:-1])}, inplace=True)
             else:
                 S.rename(index={id: r'$\{}$'.format(id)}, inplace=True)
-    else:
-        # for manuscript
-        
-        # Gather the S1 or ST results
-        S = pd.concat([S_G_sens[S_string], P_G_sens[S_string], A_G_sens[S_string], 
-                        F_G_sens[S_string], R_G_sens[S_string], S_C_sens[S_string], 
-                        S_H_sens[S_string], P_C_sens[S_string], A_C_sens[S_string], 
-                        F_C_sens[S_string], R_C_sens[S_string]], 
-                        keys=['$S_G$','$P_G$','$A_G$','$F_G$','$R_G$','$S_G$',
-                            '$S_H$','$P_G$','$A_G$','$F_G$','$R_G$'], axis=1) #produces copy
-        
-        # Change to greek
-        for id in S.index:
-            if id in ['PG0', 'AG0', 'FG0', 'RG0']:
-                S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],'G')}, inplace=True)
-            elif id in ['PC0', 'AC0', 'FC0', 'RC0']:
-                S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],'G')}, inplace=True)
-            elif id in ['SH0']:
-                S.rename(index={id: r'${}_{{ {}_0 }}$'.format(id[0],id[1])}, inplace=True)
-            elif id in ['tilde_m','tilde_b','tilde_c','tilde_d','tilde_e']:
-                S.rename(index={id: r'$\~{}_{}$'.format(id[-1],'G')}, inplace=True)
-            elif id in ['log_theta_SG']:
-                S.rename(index={id: r'$\log(\theta_{{ S{} }})$'.format('G')}, inplace=True)
-            elif id in ['log_theta_SH']:
-                S.rename(index={id: r'$\log(\theta_{{ S{} }})$'.format('H')}, inplace=True)
-            elif id in ['log_theta_SC']:
-                S.rename(index={id: r'$\log(\theta_{{ S{} }})$'.format('G')}, inplace=True)
-            elif id in ['log_beta_GA','log_beta_GP']:
-                S.rename(index={id: r'$\log(\beta_{{ G{} }})$'.format(id[-1])}, inplace=True)
-            elif id in ['log_beta_CA','log_beta_CP']:
-                S.rename(index={id: r'$\log(\beta_{{ G{} }})$'.format(id[-1])}, inplace=True)
-            elif id in ['log_beta_HA','log_beta_HP']:
-                S.rename(index={id: r'$\log(\beta_{{ H{} }})$'.format(id[-1])}, inplace=True)
-            elif id in ['tilde_m_H', 'tilde_b_H']:
-                S.rename(index={id: r'$\~{}_{}$'.format(id[-3],id[-1])}, inplace=True)
-            elif id in ['tilde_m_C', 'tilde_b_C']:
-                S.rename(index={id: r'$\~{}_G$'.format(id[-3])}, inplace=True)
-            elif id[:3] == 'log':
-                S.rename(index={id: r'$\log(\{})$'.format(id[4:])}, inplace=True)
-            elif id == 'k':
-                S.rename(index={id: r'${}$'.format(id)}, inplace=True)
-            else:
-                if id[-1] == 'G':
-                    S.rename(index={id: r'$\{}G$'.format(id[:-1])}, inplace=True)
-                elif id[-1] == 'C':
-                    S.rename(index={id: r'$\{}G$'.format(id[:-1])}, inplace=True)
-                else:
-                    S.rename(index={id: r'$\{}$'.format(id)}, inplace=True)
 
 
     # Plot
